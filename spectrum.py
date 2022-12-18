@@ -24,7 +24,7 @@ if __name__ == '__main__':
     t1, sf100a1 = gen_signal.gen_sine(25000000, 0.2, 105000, 1)
     _, sf200a2 = gen_signal.gen_sine(25000000, 0.2, 197000, 2)
     _, sf300a3 = gen_signal.gen_sine(25000000, 0.2, 303000, 3)
-    _, sf005a01dc03 = gen_signal.gen_sine(25000000, 0.2, 30, 0.1)*(t1*6)
+    _, sf005a01dc03 = gen_signal.gen_sine(25000000, 0.2, 200, 0.1) * (t1 * 6)
     sf005a01dc03 = sf005a01dc03 + 0.3
     sig = gen_signal.mix(sf005a01dc03, sf100a1 + sf200a2 + sf300a3)
     sig = gen_signal.awgn(sig, 20)
@@ -33,34 +33,35 @@ if __name__ == '__main__':
 
     # adc采样 2.5Msps, 删除滤波器不稳定部分
     t1_sample = gen_signal.resample(t1, 10)[100:-100]
-    fout_data_sample = gen_signal.resample(fout_data, 10)[:,100:-100]
+    fout_data_sample = gen_signal.resample(fout_data, 10)[:, 100:-100]
 
     # 分时采样不同频段
-    adc_sample = 83
     adc_ch = 30
     [row, col] = np.shape(fout_data_sample)
-    sample_len = col - col % (adc_sample * adc_ch)
+    sample_len = int(col / adc_ch) * adc_ch
     fout_data_adc_sampled = np.empty(shape=[0, int(sample_len / adc_ch)])
     for i in range(row):
         f = fout_data_sample[i, 0:sample_len]
-        f = f.reshape(int(sample_len / adc_sample), adc_sample)
         f = f[::adc_ch]
-        f = f.reshape(1, np.size(f))
+        f = np.expand_dims(f, axis=0)
         fout_data_adc_sampled = np.append(fout_data_adc_sampled, f, axis=0)
 
     # 生成400K调制信号后通过信号平方后经过低通滤波器还原包络
     # 或使用Hilbert变换
     fout_pow2 = np.power(fout_data_adc_sampled, 2)
-    fout_software_pow2_lpf = gen_signal.lpf(fout_pow2, 2500000/30, 5000)
+    fout_software_pow2_lpf = gen_signal.lpf(fout_pow2, 2500000 / 30, 5000, digital=True)
     fout_software_lpf = np.power(fout_software_pow2_lpf, 0.5)
 
     ax0 = plt.subplot(411)
-    ax0.plot(fout_software_lpf[0,:])
+    ax0.plot(fout_software_lpf[0, :])
     ax0.plot(sf005a01dc03[::300])
     ax1 = plt.subplot(412)
-    ax1.plot(fout_data_adc_sampled[0,:])
+    ax1.plot(fout_data_adc_sampled[0, :])
+    ax1.plot(fout_software_lpf[0, :] * 1.414)
     ax2 = plt.subplot(413)
     ax2.plot(fout_data_adc_sampled[1, :])
+    ax2.plot(fout_software_lpf[1, :] * 1.414)
     ax3 = plt.subplot(414)
     ax3.plot(fout_data_adc_sampled[2, :])
+    ax3.plot(fout_software_lpf[2, :] * 1.414)
     plt.show()

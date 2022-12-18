@@ -33,21 +33,30 @@ def awgn(x, snr, seed=7):
     return x + noise
 
 
-def lpf(data, fs, fp):
+def lpf(data, fs, fp, digital=False):
     sos = signal.butter(8, fp, 'lowpass', fs=fs, output='sos')
-    return signal.sosfiltfilt(sos, data)
+    if digital:
+        return signal.sosfilt(sos, data)
+    else:
+        return signal.sosfiltfilt(sos, data)
 
 
-def bpf(data, fs, fc, fp):
+def bpf(data, fs, fc, fp, digital=False):
     fp1 = fc - fp / 2
     fp2 = fc + fp / 2
     sos = signal.butter(8, [fp1, fp2], 'bandpass', fs=fs, output='sos')
-    return signal.sosfiltfilt(sos, data)
+    if digital:
+        return signal.sosfilt(sos, data)
+    else:
+        return signal.sosfiltfilt(sos, data)
 
 
-def hpf(data, fs, fp):
+def hpf(data, fs, fp, digital=False):
     sos = signal.butter(8, fp, 'highpass', fs=fs, output='sos')
-    return signal.sosfiltfilt(sos, data)
+    if digital:
+        return signal.sosfilt(sos, data)
+    else:
+        return signal.sosfiltfilt(sos, data)
 
 
 def mix(data1, data2):
@@ -76,6 +85,7 @@ if __name__ == '__main__':
     s3r = resample(s3, 10)
 
     s4 = lpf(s1, 10000, 60)
+    s4d = lpf(s1, 10000, 60, digital=True)
     s5 = bpf(s1, 10000, 150, 50)
     s6 = hpf(s1, 10000, 300)
 
