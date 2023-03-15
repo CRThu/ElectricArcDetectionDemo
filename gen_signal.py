@@ -18,14 +18,17 @@ def gen_sine(fs, t, f, a):
     return t_array, a * np.sin(2 * np.pi * f * t_array)
 
 
-def awgn(x, snr, seed=7):
+def rand_seed(seed=7):
+    np.random.seed(seed)  # 设置随机种子
+
+
+def awgn(x, snr):
     '''
     加入高斯白噪声 Additive White Gaussian Noise
     :param x: 原始信号
     :param snr: 信噪比
     :return: 加入噪声后的信号
     '''
-    np.random.seed(seed)  # 设置随机种子
     snr = 10 ** (snr / 10.0)
     xpower = np.sum(x ** 2) / len(x)
     npower = xpower / snr
